@@ -1,0 +1,223 @@
+---
+title: "mpls_2021_election"
+author: "Luke Kolar"
+date: "12/12/2021"
+output: html_document
+---
+
+```{r, message = F, warning = F}
+
+# Helpful libraries
+library(sf)
+library(rgdal)
+library(janitor)
+library(readxl)
+library(RColorBrewer)
+library(viridis)
+library(scales)
+library(gridExtra)
+library(cowplot)
+library(rlang)
+library(readxl)
+library(stargazer)
+
+# Load important libraries last
+library(shapefiles)
+library(tidyverse)
+
+```
+
+```{r}
+
+# Read Hennepin County precinct map
+hennepin_precincts_raw <- readOGR( 
+  dsn = paste0(getwd(),"/data/hennepin_precincts/"), 
+  layer = "Voting_Precincts",
+  verbose = FALSE) 
+
+# Transform file to sf format
+hennepin_precincts_messy <- spTransform(hennepin_precincts_raw, 
+            CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+hennepin_precincts_sf <- st_as_sf(hennepin_precincts_messy)
+
+# Clean data - merging empty precincts
+mpls_precincts <- hennepin_precincts_sf %>%
+  clean_names() %>% 
+  filter(munic_name == "MINNEAPOLIS") %>% 
+  mutate(precinct_name = paste0("W-", ward, " P-", precinct)) %>%
+  mutate(precinct_name = ifelse(precinct_name == "W-10 P-5-B", "W-10 P-5-A", precinct_name)) %>% 
+  mutate(precinct_name = ifelse(precinct_name == "W-10 P-3-B", "W-10 P-3-A", precinct_name)) %>% 
+  group_by(precinct_name) %>%
+  summarise(geometry = st_union(geometry)) %>%
+  ungroup() %>% 
+  mutate(precinct_name = ifelse(precinct_name == "W-10 P-5-A", "W-10 P-5", precinct_name)) %>% 
+  mutate(precinct_name = ifelse(precinct_name == "W-10 P-3-A", "W-10 P-3", precinct_name))
+
+# mpls_precincts %>% 
+#   ggplot(.) + geom_sf()
+
+```
+
+```{r}
+
+precinct_info <- read_xlsx("data/precinct_info.xlsx", col_names = TRUE) %>% 
+  clean_names() %>% 
+  select(!ward) %>% 
+  select(!precinct)
+
+```
+
+```{r}
+# Read Hennepin County precinct map
+mpls_shots_fired_raw <- readOGR( 
+  dsn = paste0(getwd(),"/data/mpls_shots_fired/"), 
+  layer = "Shots_Fired",
+  verbose = FALSE) 
+
+# Transform file to st format, then to sf format
+mpls_shots_fired_messy <- spTransform(mpls_shots_fired_raw, 
+            CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+mpls_shots_fired_sf <- st_as_sf(mpls_shots_fired_messy)
+
+# Clean data - merging empty precincts
+locations_draft <- mpls_shots_fired_sf %>% 
+  clean_names() %>%
+  as.data.frame() %>% 
+  filter(str_detect(year, "2021"))
+
+locations_mapped <- st_as_sf(locations_draft, coords = c('latitude', 'longitude'), 
+                             crs = st_crs(mpls_precincts))
+
+locations_only <- locations_draft %>% 
+  mutate(intersection = as.integer(st_intersects(geometry, mpls_precincts)), 
+         area = if_else(is.na(intersection), '', mpls_precincts$precinct_name[intersection])) 
+
+locations <- locations_only %>% 
+  group_by(area) %>% 
+  summarize(n_shots = n()) %>% 
+  ungroup() %>% 
+  filter(!area == "") %>% 
+  full_join(locations_only %>% 
+              filter(month %in% c(6, 7, 8)) %>% 
+              group_by(area) %>% 
+              summarize(n_shots_summer = n()) %>% 
+              ungroup() %>% 
+              filter(!area == ""), 
+            by = c("area"))
+
+mpls_precincts_shots <- mpls_precincts %>% 
+  full_join(locations, by = c("precinct_name" = "area")) %>% 
+  full_join(precinct_info, by = c("precinct_name" = "name")) %>% 
+  mutate(n_shots = ifelse(is.na(n_shots), 0, n_shots),
+         n_shots_summer = ifelse(is.na(n_shots_summer), 0, n_shots_summer)) %>% 
+  mutate(perc_voted_no = 100*votes_no/(votes_yes + votes_no),
+         precinct_area_m2 = as.numeric(st_area(geometry)),
+         n_shots_by_m2 = n_shots/precinct_area_m2,
+         n_shots_by_m2_summer = n_shots_summer/precinct_area_m2)
+
+```
+
+
+```{r}
+
+# MAP COLLECTION:
+
+# Showing out-of-jurisdiction gunshots that were excluded from the final data
+mpls_precincts %>% 
+  ggplot(.) + geom_sf() + 
+  geom_point(data = locations_only %>% filter(area == ""), 
+             aes(x = longitude, y = latitude), size = 3, shape = 23, fill = "darkred") + 
+  theme_void()
+
+# Mapping gunshots over the course of 2021 in its entirety
+mpls_precincts %>% 
+  ggplot(.) + geom_sf() + 
+  geom_point(data = locations_only %>% filter(!area == ""), 
+             aes(x = longitude, y = latitude), size = 0.5, shape = 20, color = "darkred") + 
+  theme_void()
+
+# Mapping gunshots during the summer of 2021
+mpls_precincts %>% 
+  ggplot(.) + geom_sf() + 
+  geom_point(data = locations_only %>% filter(month %in% c(6, 7, 8), !area == ""), 
+             aes(x = longitude, y = latitude), size = 0.5, shape = 20, color = "darkred") + 
+  theme_void()
+
+# Summer 2021 gunshot heat map by precinct
+mpls_precincts_shots %>% 
+  ggplot(.) + geom_sf(aes(fill = n_shots_summer)) + 
+  scale_fill_viridis_c(#low = "white", high = "red", na.value = NA,
+                      guide = guide_colorbar(frame.colour = "black", ticks.colour = "black")) + 
+  theme_void() + 
+  labs(fill = "Summer gunshots")
+
+# Mapping gunshots over precinct % Black
+mpls_precincts_shots %>% 
+  ggplot(.) + geom_sf(aes(fill = perc_black), color = "white") + 
+  geom_point(data = locations_only %>% filter(month %in% c(6, 7, 8), !area == ""), 
+             aes(x = longitude, y = latitude), size = 0.75, shape = 20, color = "red3") + 
+  scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
+                      guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
+  theme_void() + 
+  labs(fill = "% Black")
+
+# Mapping gunshots over precinct % non-white
+mpls_precincts_shots %>% 
+  ggplot(.) + geom_sf(aes(fill = 100 - perc_white), color = "white") + 
+  geom_point(data = locations_only %>% filter(month %in% c(6, 7, 8), !area == ""), 
+             aes(x = longitude, y = latitude), size = 0.75, shape = 20, color = "red3") + 
+  scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
+                      guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
+  theme_void() + 
+  labs(fill = "% Non-white")
+
+# Mapping gunshots over precinct % voted "NO" on anti-police ballot initiative
+mpls_precincts_shots %>% 
+  ggplot(.) + geom_sf(aes(fill = votes_no/(votes_yes + votes_no)), color = "white") + 
+  geom_point(data = locations_only %>% filter(month %in% c(6, 7, 8), !area == ""), 
+             aes(x = longitude, y = latitude), size = 0.75, shape = 20, color = "red3") + 
+  scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
+                      guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
+  theme_void() + 
+  labs(fill = "% voted no")
+
+```
+
+```{r}
+
+mpls_precincts_shots %>% 
+  filter(!is.na(precinct_name)) %>% 
+  ggplot(aes(x = vap_perc_white, y = perc_voted_no, color = n_shots_summer)) + geom_point() + 
+  geom_smooth(method = "lm")
+
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer > 80, 80, n_shots_summer)) %>% 
+  ggplot(aes(x = n_shots_summer, y = perc_voted_no, color = perc_white)) + geom_point() + 
+  geom_smooth(method = "lm")
+
+mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
+          data = mpls_precincts_shots %>% 
+            mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+            mutate(log_n_shots_summer = log(n_shots_summer)))
+
+mod <- lm(perc_voted_no ~ vap_perc_white + n_shots_summer, 
+          data = mpls_precincts_shots %>% 
+            mutate(n_shots_summer = ifelse(n_shots_summer > 80, 80, n_shots_summer)))
+
+stargazer(mod, type = "text")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
