@@ -27,7 +27,7 @@ library(tidyverse)
 
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
 # Read Hennepin County precinct map
 hennepin_precincts_raw <- readOGR( 
@@ -53,13 +53,11 @@ mpls_precincts <- hennepin_precincts_sf %>%
   mutate(precinct_name = ifelse(precinct_name == "W-10 P-5-A", "W-10 P-5", precinct_name)) %>% 
   mutate(precinct_name = ifelse(precinct_name == "W-10 P-3-A", "W-10 P-3", precinct_name))
 
-# mpls_precincts %>% 
-#   ggplot(.) + geom_sf()
-
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
+# 
 precinct_info <- read_xlsx("data/precinct_info.xlsx", col_names = TRUE) %>% 
   clean_names() %>% 
   select(!ward) %>% 
@@ -67,7 +65,8 @@ precinct_info <- read_xlsx("data/precinct_info.xlsx", col_names = TRUE) %>%
 
 ```
 
-```{r}
+```{r, message = F, warning = F}
+
 # Read Hennepin County precinct map
 mpls_shots_fired_raw <- readOGR( 
   dsn = paste0(getwd(),"/data/mpls_shots_fired/"), 
@@ -113,14 +112,15 @@ mpls_precincts_shots <- mpls_precincts %>%
   mutate(perc_voted_no = 100*votes_no/(votes_yes + votes_no),
          precinct_area_m2 = as.numeric(st_area(geometry)),
          n_shots_by_m2 = n_shots/precinct_area_m2,
-         n_shots_by_m2_summer = n_shots_summer/precinct_area_m2)
+         n_shots_by_m2_summer = n_shots_summer/precinct_area_m2,
+         turnout = 100*(votes_yes + votes_no)/vap_pop)
+
 
 ```
 
+```{r, message = F, warning = F}
 
-```{r}
-
-# MAP COLLECTION:
+## MAP COLLECTION:
 
 # Showing out-of-jurisdiction gunshots that were excluded from the final data
 mpls_precincts %>% 
@@ -185,6 +185,143 @@ mpls_precincts_shots %>%
 
 ```{r}
 
+## GRAPH COLLECTION / DATA CHARACTERISTICS for OTHER VARIABLES: 
+
+# 
+mpls_precincts_shots %>% 
+  ggplot(aes(x = perc_voted_no)) + geom_density()
+
+mpls_precincts_shots %>% 
+  arrange(perc_voted_no) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, perc_voted_no) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  arrange(desc(perc_voted_no)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, perc_voted_no) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(perc_voted_no))
+
+# 
+mpls_precincts_shots %>% 
+  ggplot(aes(x = turnout)) + geom_density()
+
+#
+mpls_precincts_shots %>% 
+  ggplot(aes(x = turnout, y = perc_voted_no)) + geom_point() + geom_smooth(method = "lm")
+
+stargazer(lm(perc_voted_no ~ turnout, data = mpls_precincts_shots), type = "text")
+
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  ggplot(aes(x = log_n_shots_summer, y = turnout)) + geom_point() + geom_smooth(method = "lm")
+
+stargazer(lm(turnout ~ log_n_shots_summer, data = mpls_precincts_shots %>% 
+                    mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+                    mutate(log_n_shots_summer = log(n_shots_summer))), type = "text")
+
+mpls_precincts_shots %>% 
+  ggplot(aes(x = n_shots_summer, y = turnout)) + geom_point() + geom_smooth(method = "lm")
+
+stargazer(lm(turnout ~ n_shots_summer, data = mpls_precincts_shots), type = "text")
+
+# 
+mpls_precincts_shots %>% 
+  mutate(turnout = 100*(votes_yes + votes_no)/vap_pop) %>% 
+  arrange(turnout) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, turnout) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>%
+  mutate(turnout = 100*(votes_yes + votes_no)/vap_pop) %>% 
+  arrange(desc(turnout)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, turnout) %>% 
+  filter(row_number() %in% c(1))
+
+mpls_precincts_shots %>% 
+  mutate(turnout = 100*(votes_yes + votes_no)/vap_pop) %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(turnout))
+
+#
+mpls_precincts_shots %>% 
+  ggplot(aes(x = vap_pop)) + geom_density()
+
+mpls_precincts_shots %>% 
+  arrange(vap_pop) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, vap_pop) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  arrange(desc(vap_pop)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, vap_pop) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(perc_voted_no))
+
+```
+
+```{r}
+
+mpls_precincts_shots %>% 
+  ggplot(aes(x = vap_perc_white)) + geom_density()
+
+mpls_precincts_shots %>% 
+  arrange(vap_perc_white) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, vap_perc_white) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  arrange(desc(vap_perc_white)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, vap_perc_white) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(vap_perc_white))
+
+```
+
+```{r}
+
+mpls_precincts_shots %>% 
+  ggplot(aes(x = n_shots_summer)) + geom_density()
+
+mpls_precincts_shots %>% 
+  arrange(n_shots_summer) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, n_shots_summer) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  arrange(desc(n_shots_summer)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, n_shots_summer) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(n_shots_summer))
+
+```
+
+
+```{r}
+
 mpls_precincts_shots %>% 
   filter(!is.na(precinct_name)) %>% 
   ggplot(aes(x = vap_perc_white, y = perc_voted_no, color = n_shots_summer)) + geom_point() + 
@@ -195,12 +332,21 @@ mpls_precincts_shots %>%
   ggplot(aes(x = n_shots_summer, y = perc_voted_no, color = perc_white)) + geom_point() + 
   geom_smooth(method = "lm")
 
-mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
+mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white + turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
             mutate(log_n_shots_summer = log(n_shots_summer)))
 
-mod <- lm(perc_voted_no ~ vap_perc_white + n_shots_summer, 
+stargazer(mod, type = "text")
+
+mod <- lm(perc_voted_no ~ log_n_shots_summer*turnout, 
+          data = mpls_precincts_shots %>% 
+            mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+            mutate(log_n_shots_summer = log(n_shots_summer)))
+
+stargazer(mod, type = "text")
+
+mod <- lm(perc_voted_no ~ vap_perc_white + n_shots_summer + turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer > 80, 80, n_shots_summer)))
 
