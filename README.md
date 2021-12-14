@@ -14,7 +14,7 @@
 
 ### 1) Percent voted "no" on Q2 density plot, by precinct
 
-![b1.png](/images/b1.png)
+![b1.png](/images/b1.png){ width=50% }
 
 ### 2) Percent turnout density plot, by precinct
 
