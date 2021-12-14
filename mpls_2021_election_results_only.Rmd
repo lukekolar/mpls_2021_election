@@ -9,22 +9,8 @@ See https://github.com/lukekolar/mpls_2021_election for all code.
 
 ```{r setup, include=FALSE}
 
-# Helpful libraries
-library(sf)
-library(rgdal)
-library(janitor)
-library(readxl)
-library(RColorBrewer)
-library(viridis)
-library(scales)
-library(gridExtra)
-library(cowplot)
-library(rlang)
-library(readxl)
+# Load libraries
 library(stargazer)
-
-# Load important libraries last
-library(shapefiles)
 library(tidyverse)
 
 ```
