@@ -1,4 +1,4 @@
-# Appendix to *Gunshots and 'Getting Out the Vote'*:
+# Appendix to *Gunshots Getting Out the Vote*:
 
 ## 1) *Districtr* Tecnicalities
 
