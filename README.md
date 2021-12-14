@@ -9,11 +9,14 @@
 
 ## 2) Data Exploration
 
-- density plots for % no, voter turnout
+### a) Percent voted "no" on Q2 density plot, by precinct
 
-- lin reg of turnout w gunshots, % no, and % vap white
-- turnout / gunshots map
-- turnout race map
+### b) Percent turnout density plot, by precinct
+
+### c) 
+
+
+
 
 - density vap per precinct
 - % white skew
