@@ -16,37 +16,38 @@
 
 <img src="/images/b1.png" alt="b1.png" width=50% height=50%>
 
-### 2) Percent turnout density plot, by precinct
+### 2) Percent turnout (on Q2) density plot, by precinct
 
 <img src="/images/b2.png" alt="b2.png" width=50% height=50%>
 
-### 3) 
+### 3) Regression model: modeling % turnout (on Q2) with log summer gunshots
 
 <img src="/images/b3.png" alt="b3.png" width=50% height=50%>
 
-### 4) 
+### 4) Regression model: modeling % "no" on Q2 with % turnout (on Q2)
 
 <img src="/images/b4.png" alt="b4.png" width=50% height=50%>
 
-### 5) 
+### 5) Regression model: modeling % turnout (on Q2) with voting age population % white
 
 <img src="/images/b5.png" alt="b5.png" width=50% height=50%>
 
-### 6) 
+### 6) Voting age population total density plot, by precinct
 
 <img src="/images/b6.png" alt="b6.png" width=50% height=50%>
 
-### 7) 
+### 7) Voting age population percent white density plot, by precinct
 
 <img src="/images/b7.png" alt="b7.png" width=50% height=50%>
 
-### 8)
+### 8) Summer gunshots mapped over % turnout (on Q2), by precinct
 
 <img src="/images/b8.png" alt="b8.png" width=50% height=50%>
 
-### 9)
+### 9) Scatterplot of % turnout (on Q2) and voting age population % white
 
 <img src="/images/b9.png" alt="b9.png" width=50% height=50%>
+
 
 ## C) Figures from the Paper
 
