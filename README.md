@@ -47,3 +47,29 @@
 ### 9)
 
 <img src="/images/b9.png" alt="b9.png" width=50% height=50%>
+
+## C) Figures from the Paper
+
+### 1)
+
+<img src="/images/fig1.png" alt="fig1.png" width=50% height=50%>
+
+### 2)
+
+<img src="/images/fig2.png" alt="fig2.png" width=50% height=50%>
+
+### 3)
+
+<img src="/images/fig3.png" alt="fig3.png" width=50% height=50%>
+
+### 4)
+
+<img src="/images/fig4.png" alt="fig4.png" width=50% height=50%>
+
+### 5)
+
+<img src="/images/fig5.png" alt="fig5.png" width=50% height=50%>
+
+### 6)
+
+<img src="/images/fig5.png" alt="fig6.png" width=50% height=50%>
