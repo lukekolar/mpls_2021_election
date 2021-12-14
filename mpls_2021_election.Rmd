@@ -117,6 +117,7 @@ mpls_precincts_shots <- mpls_precincts %>%
          n_shots_by_m2_summer = n_shots_summer/precinct_area_m2,
          turnout = 100*(votes_yes + votes_no)/vap_pop)
 
+# /// saveRDS(mpls_precincts_shots, file = "data/mpls_precincts_shots.rds")
 
 ```
 
