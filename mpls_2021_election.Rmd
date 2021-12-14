@@ -491,6 +491,8 @@ stargazer(mod, type = "html", out = "images/regression.html",
 
 
 ```{r, message = F, warning = F}
+
+# Regression experiment - turnout as an interaction variable with log summer gunshots
 mod <- lm(perc_voted_no ~ log_n_shots_summer*turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
@@ -498,6 +500,7 @@ mod <- lm(perc_voted_no ~ log_n_shots_summer*turnout,
 
 stargazer(mod, type = "text")
 
+# Regression experiment - turnout as an additional variable with final model
 mod <- lm(perc_voted_no ~ vap_perc_white + n_shots_summer + turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer > 80, 80, n_shots_summer)))
@@ -509,8 +512,7 @@ stargazer(mod, type = "text")
 
 ```{r, message = F, warning = F}
 
-
-
+# Regression experiment - final model excluding University precincts
 mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
