@@ -1,0 +1,45 @@
+---
+title: "Minneapolis 2021 Election - Question 2 Project - Results Only"
+author: "Luke Kolar"
+date: "12/14/2021"
+output: html_document
+---
+
+See https://github.com/lukekolar/mpls_2021_election for all code.
+
+```{r setup, include=FALSE}
+
+# Helpful libraries
+library(sf)
+library(rgdal)
+library(janitor)
+library(readxl)
+library(RColorBrewer)
+library(viridis)
+library(scales)
+library(gridExtra)
+library(cowplot)
+library(rlang)
+library(readxl)
+library(stargazer)
+
+# Load important libraries last
+library(shapefiles)
+library(tidyverse)
+
+```
+
+```{r}
+
+# Read data
+mpls_precincts_shots <- readRDS("data/mpls_precincts_shots.rds")
+
+# Final regression model for the study
+mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
+          data = mpls_precincts_shots %>% 
+            mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+            mutate(log_n_shots_summer = log(n_shots_summer)))
+
+stargazer(mod, type = "text")
+
+```
