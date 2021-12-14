@@ -22,15 +22,15 @@
 
 ### 3) 
 
-<img src="/images/b3.png" alt="b3.png" width=75% height=75%>
+<img src="/images/b3.png" alt="b3.png" width=50% height=50%>
 
 ### 4) 
 
-<img src="/images/b4.png" alt="b4.png" width=75% height=75%>
+<img src="/images/b4.png" alt="b4.png" width=50% height=50%>
 
 ### 5) 
 
-<img src="/images/b5.png" alt="b5.png" width=75% height=75%>
+<img src="/images/b5.png" alt="b5.png" width=50% height=50%>
 
 ### 6) 
 
