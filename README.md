@@ -15,36 +15,35 @@
 ### 1) Percent voted "no" on Q2 density plot, by precinct
 
 <img src="/images/b1.png" alt="b1.png" width=50% height=50%>
-![b1.png](/images/b1.png){ width=50% }
 
 ### 2) Percent turnout density plot, by precinct
 
-![b2.png](/images/b2.png)
+<img src="/images/b2.png" alt="b2.png" width=50% height=50%>
 
 ### 3) 
 
-![b3.png](/images/b3.png)
+<img src="/images/b3.png" alt="b3.png" width=50% height=50%>
 
 ### 4) 
 
-![b4.png](/images/b4.png)
+<img src="/images/b4.png" alt="b4.png" width=50% height=50%>
 
 ### 5) 
 
-![b5.png](/images/b5.png)
+<img src="/images/b5.png" alt="b5.png" width=50% height=50%>
 
 ### 6) 
 
-![b6.png](/images/b6.png)
+<img src="/images/b6.png" alt="b6.png" width=50% height=50%>
 
 ### 7) 
 
-![b7.png](/images/b7.png)
+<img src="/images/b7.png" alt="b7.png" width=50% height=50%>
 
 ### 8)
 
-![b8.png](/images/b8.png)
+<img src="/images/b8.png" alt="b8.png" width=50% height=50%>
 
 ### 9)
 
-![b9.png](/images/b9.png)
+<img src="/images/b9.png" alt="b9.png" width=50% height=50%>
