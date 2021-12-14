@@ -115,7 +115,8 @@ mpls_precincts_shots <- mpls_precincts %>%
          precinct_area_m2 = as.numeric(st_area(geometry)),
          n_shots_by_m2 = n_shots/precinct_area_m2,
          n_shots_by_m2_summer = n_shots_summer/precinct_area_m2,
-         turnout = 100*(votes_yes + votes_no)/vap_pop)
+         turnout = 100*(votes_yes + votes_no)/vap_pop,
+         log_n_shots_summer = ifelse(n_shots_summer == 0, 0, log(n_shots_summer)))
 
 # /// saveRDS(mpls_precincts_shots, file = "data/mpls_precincts_shots.rds")
 
