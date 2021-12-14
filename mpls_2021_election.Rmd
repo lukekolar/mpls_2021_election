@@ -1,5 +1,5 @@
 ---
-title: "mpls_2021_election"
+title: "Minneapolis 2021 Election - Question 2 Project"
 author: "Luke Kolar"
 date: "12/12/2021"
 output: html_document
@@ -57,7 +57,7 @@ mpls_precincts <- hennepin_precincts_sf %>%
 
 ```{r, message = F, warning = F}
 
-# 
+# Load / clean demographic data and election returns from Excel
 precinct_info <- read_xlsx("data/precinct_info.xlsx", col_names = TRUE) %>% 
   clean_names() %>% 
   select(!ward) %>% 
@@ -91,6 +91,7 @@ locations_only <- locations_draft %>%
   mutate(intersection = as.integer(st_intersects(geometry, mpls_precincts)), 
          area = if_else(is.na(intersection), '', mpls_precincts$precinct_name[intersection])) 
 
+# Create number of gunshots, number of summer gunshots columns
 locations <- locations_only %>% 
   group_by(area) %>% 
   summarize(n_shots = n()) %>% 
@@ -104,6 +105,7 @@ locations <- locations_only %>%
               filter(!area == ""), 
             by = c("area"))
 
+# Join precinct shapefiles with demographic and gunshot data
 mpls_precincts_shots <- mpls_precincts %>% 
   full_join(locations, by = c("precinct_name" = "area")) %>% 
   full_join(precinct_info, by = c("precinct_name" = "name")) %>% 
@@ -169,7 +171,12 @@ mpls_precincts_shots %>%
   scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
                       guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
   theme_void() + 
-  labs(fill = "% Non-white")
+  labs(fill = "% Non-white", title = "Summer gunshots and precinct % non-white",
+       caption = " ") + 
+  theme(plot.title = element_text(size = 16),
+        plot.caption = element_text(vjust = 6, hjust = 1.5, size = 10))
+
+# \\\ ggsave("images/fig3.png")
 
 # Mapping gunshots over precinct % voted "NO" on anti-police ballot initiative
 mpls_precincts_shots %>% 
@@ -179,7 +186,22 @@ mpls_precincts_shots %>%
   scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
                       guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
   theme_void() + 
-  labs(fill = "% voted no")
+  labs(fill = "% voted no", title = "Summer gunshots and precinct % voted \"no\" on Q2",
+       caption = "One red dot = one gunshot") + 
+  theme(plot.title = element_text(size = 16),
+        plot.caption = element_text(vjust = 6, hjust = 1.5, size = 10))
+
+# \\\ ggsave("images/fig4.png")
+
+# Mapping gunshots over voter turnout 
+mpls_precincts_shots %>% 
+  ggplot(.) + geom_sf(aes(fill = turnout), color = "white") + 
+  geom_point(data = locations_only %>% filter(month %in% c(6, 7, 8), !area == ""), 
+             aes(x = longitude, y = latitude), size = 0.75, shape = 20, color = "red3") + 
+  scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
+                      guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
+  theme_void() + 
+  labs(fill = "Voter turnout")
 
 ```
 
@@ -271,6 +293,10 @@ mpls_precincts_shots %>%
   as.data.frame() %>% 
   summarize(mean = mean(perc_voted_no))
 
+#
+mpls_precincts_shots %>% 
+  ggplot(aes(x = turnout, y = perc_white)) + geom_point() + geom_smooth(method = "lm")
+
 ```
 
 ```{r}
@@ -299,19 +325,36 @@ mpls_precincts_shots %>%
 ```{r}
 
 mpls_precincts_shots %>% 
-  ggplot(aes(x = n_shots_summer)) + geom_density()
+  ggplot(aes(x = n_shots_summer)) + geom_density() + theme_minimal() + 
+  labs(x = "Count of summer gunshots by precinct", y = "Density", 
+       title = "Density plot of summer gunshots by precinct") + 
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        axis.title = element_text(size = 13))
+
+ggsave("images/fig1.png")
+
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  ggplot(aes(x = log_n_shots_summer)) + geom_density() + theme_minimal() + 
+  labs(x = "Log count of summer gunshots", y = "Density", 
+       title = "Density plot of log summer gunshots by precinct") + 
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        axis.title = element_text(size = 13))
+
+ggsave("images/fig2.png")
 
 mpls_precincts_shots %>% 
   arrange(n_shots_summer) %>% 
   as.data.frame() %>% 
   select(precinct_name, n_shots_summer) %>% 
-  filter(row_number() %in% c(1:10))
+  filter(row_number() %in% c(1:30))
 
 mpls_precincts_shots %>% 
   arrange(desc(n_shots_summer)) %>% 
   as.data.frame() %>% 
   select(precinct_name, n_shots_summer) %>% 
-  filter(row_number() %in% c(1:10))
+  filter(row_number() %in% c(1:20))
 
 mpls_precincts_shots %>% 
   as.data.frame() %>% 
@@ -319,26 +362,84 @@ mpls_precincts_shots %>%
 
 ```
 
-
 ```{r}
 
 mpls_precincts_shots %>% 
-  filter(!is.na(precinct_name)) %>% 
-  ggplot(aes(x = vap_perc_white, y = perc_voted_no, color = n_shots_summer)) + geom_point() + 
-  geom_smooth(method = "lm")
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  ggplot(aes(x = log_n_shots_summer)) + geom_density()
 
 mpls_precincts_shots %>% 
-  mutate(n_shots_summer = ifelse(n_shots_summer > 80, 80, n_shots_summer)) %>% 
-  ggplot(aes(x = n_shots_summer, y = perc_voted_no, color = perc_white)) + geom_point() + 
-  geom_smooth(method = "lm")
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  arrange(log_n_shots_summer) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, log_n_shots_summer) %>% 
+  filter(row_number() %in% c(1:10))
 
-mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white + turnout, 
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  arrange(desc(log_n_shots_summer)) %>% 
+  as.data.frame() %>% 
+  select(precinct_name, log_n_shots_summer) %>% 
+  filter(row_number() %in% c(1:10))
+
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  as.data.frame() %>% 
+  summarize(mean = mean(log_n_shots_summer))
+
+
+```
+
+```{r, message = F, warning = F}
+
+# Scatterplot of voting age population white and % voted "NO" on anti-police ballot initiative
+mpls_precincts_shots %>% 
+  filter(!is.na(precinct_name)) %>% 
+  ggplot(aes(x = vap_perc_white, y = perc_voted_no)) + geom_point() + 
+  geom_smooth(method = "lm") + theme_minimal() + 
+  labs(y = "% voted \"no\"", x = "Voting age population % white",
+       title = "Precinct voting age population % white and % voting \"no\" on Q2") + 
+  ylim(20, 85) + theme(plot.title = element_text(size = 16))
+
+# /// ggsave("images/fig5.png")
+
+# Scatterplot of log summer gunshots and % voted "NO" on anti-police ballot initiative
+mpls_precincts_shots %>% 
+  mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+  mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+  ggplot(aes(x = log_n_shots_summer, y = perc_voted_no)) + geom_point() + 
+  geom_smooth(method = "lm") + theme_minimal() + 
+  labs(y = "", x = "Log count of summer 2021 gunshots",
+       title = "Precinct log summer gunshots and % voting \"no\" on Q2") + 
+  ylim(20, 85) + theme(plot.title = element_text(size = 16))
+
+# /// ggsave("images/fig6.png")
+
+```
+
+
+```{r}
+
+# Final regression model for the study
+mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
           data = mpls_precincts_shots %>% 
+            rename("Log count of summer gunshots" = )
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
             mutate(log_n_shots_summer = log(n_shots_summer)))
 
 stargazer(mod, type = "text")
+stargazer(mod, type = "html", out = "images/regression.html",
+          covariate.labels = c("Log summer gunshots", "Voting age % white"),
+          dep.var.labels   = "% voted \"no\" on Question 2")
 
+```
+
+
+```{r}
 mod <- lm(perc_voted_no ~ log_n_shots_summer*turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
@@ -355,6 +456,19 @@ stargazer(mod, type = "text")
 ```
 
 
+```{r}
+
+
+
+mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
+          data = mpls_precincts_shots %>% 
+            mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+            mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
+            filter(!precinct_name %in% c("W-2 P-4", "W-2 P-10")))
+
+stargazer(mod, type = "text")
+
+```
 
 
 
