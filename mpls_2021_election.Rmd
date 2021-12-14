@@ -201,17 +201,23 @@ mpls_precincts_shots %>%
   scale_fill_gradient(low = "#CEB5C9", high = "#1B1318", na.value = NA,
                       guide = guide_colorbar(frame.colour = "white", ticks.colour = "white")) + 
   theme_void() + 
-  labs(fill = "Voter turnout")
+  labs(fill = "Voter turnout") + 
+  theme(legend.text = element_text(size = 11),
+        legend.title = element_text(size = 12))
+
+# /// ggsave("images/c7.png")
 
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
-## GRAPH COLLECTION / DATA CHARACTERISTICS for OTHER VARIABLES: 
-
-# 
+# Analyzing % voted "NO" variable
 mpls_precincts_shots %>% 
-  ggplot(aes(x = perc_voted_no)) + geom_density()
+  ggplot(aes(x = perc_voted_no)) + geom_density() + theme_minimal() + 
+  labs(x = "% voted \"no\" on Q2", y = "Density") + 
+  theme(axis.title = element_text(size = 15))
+
+# /// ggsave("images/b1.png")
 
 mpls_precincts_shots %>% 
   arrange(perc_voted_no) %>% 
@@ -229,31 +235,62 @@ mpls_precincts_shots %>%
   as.data.frame() %>% 
   summarize(mean = mean(perc_voted_no))
 
-# 
-mpls_precincts_shots %>% 
-  ggplot(aes(x = turnout)) + geom_density()
+```
 
-#
+
+```{r, message = F, warning = F}
+
+# Analyzing turnout variable
+mpls_precincts_shots %>% 
+  ggplot(aes(x = turnout)) + geom_density() + theme_minimal() + 
+  labs(x = "% turnout on Q2 vote", y = "Density") + 
+  theme(axis.title = element_text(size = 15))
+
+# /// ggsave("images/b2.png")
+
+# Turnout simple regression models with variables
+stargazer(lm(turnout ~ log_n_shots_summer, data = mpls_precincts_shots %>% 
+                    mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
+                    mutate(log_n_shots_summer = log(n_shots_summer))), type = "html",
+          out = "images/b3.html",
+          covariate.labels = c("Log summer gunshots"),
+          dep.var.labels   = "% turnout on Q2")
+
+stargazer(lm(perc_voted_no ~ turnout, data = mpls_precincts_shots), type = "html",
+          out = "images/b4.html",
+          covariate.labels = c("% turnout on Q2"),
+          dep.var.labels   = "% voted \"no\" on Question 2")
+
+stargazer(lm(turnout ~ perc_white, data = mpls_precincts_shots), type = "html",
+          out = "images/b5.html",
+          covariate.labels = c("Voting age % white"),
+          dep.var.labels   = "% turnout on Q2")
+
+```
+
+
+```{r, message = F, warning = F}
+
+# Turnout scatterplots with variables
 mpls_precincts_shots %>% 
   ggplot(aes(x = turnout, y = perc_voted_no)) + geom_point() + geom_smooth(method = "lm")
-
-stargazer(lm(perc_voted_no ~ turnout, data = mpls_precincts_shots), type = "text")
 
 mpls_precincts_shots %>% 
   mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
   mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
   ggplot(aes(x = log_n_shots_summer, y = turnout)) + geom_point() + geom_smooth(method = "lm")
 
-stargazer(lm(turnout ~ log_n_shots_summer, data = mpls_precincts_shots %>% 
-                    mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
-                    mutate(log_n_shots_summer = log(n_shots_summer))), type = "text")
-
 mpls_precincts_shots %>% 
   ggplot(aes(x = n_shots_summer, y = turnout)) + geom_point() + geom_smooth(method = "lm")
 
-stargazer(lm(turnout ~ n_shots_summer, data = mpls_precincts_shots), type = "text")
+mpls_precincts_shots %>% 
+  ggplot(aes(x = vap_perc_white, y = turnout)) + geom_point() + geom_smooth(method = "lm") + theme_minimal() + 
+  labs(x = "Voting age % white", y = "% turnout") + 
+  theme(axis.title = element_text(size = 15))
 
-# 
+# /// ggsave("images/c8.png")
+
+# Variable statistics
 mpls_precincts_shots %>% 
   mutate(turnout = 100*(votes_yes + votes_no)/vap_pop) %>% 
   arrange(turnout) %>% 
@@ -273,9 +310,18 @@ mpls_precincts_shots %>%
   as.data.frame() %>% 
   summarize(mean = mean(turnout))
 
-#
+```
+
+
+```{r, message = F, warning = F}
+
+# Analyzing voting age population variable
 mpls_precincts_shots %>% 
-  ggplot(aes(x = vap_pop)) + geom_density()
+  ggplot(aes(x = vap_pop)) + geom_density() + theme_minimal() + 
+  labs(x = "Voting age population", y = "Density") + 
+  theme(axis.title = element_text(size = 15))
+
+# /// ggsave("images/b6.png")
 
 mpls_precincts_shots %>% 
   arrange(vap_pop) %>% 
@@ -293,16 +339,17 @@ mpls_precincts_shots %>%
   as.data.frame() %>% 
   summarize(mean = mean(perc_voted_no))
 
-#
-mpls_precincts_shots %>% 
-  ggplot(aes(x = turnout, y = perc_white)) + geom_point() + geom_smooth(method = "lm")
-
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
+# Analyzing voting age population % white variable
 mpls_precincts_shots %>% 
-  ggplot(aes(x = vap_perc_white)) + geom_density()
+  ggplot(aes(x = vap_perc_white)) + geom_density() + theme_minimal() + 
+  labs(x = "Voting age population % white", y = "Density") + 
+  theme(axis.title = element_text(size = 15))
+
+# /// ggsave("images/b7.png")
 
 mpls_precincts_shots %>% 
   arrange(vap_perc_white) %>% 
@@ -322,8 +369,9 @@ mpls_precincts_shots %>%
 
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
+# Comparing raw and log gunshot variables
 mpls_precincts_shots %>% 
   ggplot(aes(x = n_shots_summer)) + geom_density() + theme_minimal() + 
   labs(x = "Count of summer gunshots by precinct", y = "Density", 
@@ -331,7 +379,7 @@ mpls_precincts_shots %>%
   theme(plot.title = element_text(hjust = 0.5, size = 20),
         axis.title = element_text(size = 13))
 
-ggsave("images/fig1.png")
+# /// ggsave("images/fig1.png")
 
 mpls_precincts_shots %>% 
   mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
@@ -342,7 +390,7 @@ mpls_precincts_shots %>%
   theme(plot.title = element_text(hjust = 0.5, size = 20),
         axis.title = element_text(size = 13))
 
-ggsave("images/fig2.png")
+# /// ggsave("images/fig2.png")
 
 mpls_precincts_shots %>% 
   arrange(n_shots_summer) %>% 
@@ -362,12 +410,17 @@ mpls_precincts_shots %>%
 
 ```
 
-```{r}
+```{r, message = F, warning = F}
 
+# Analyzing log gunshot variable
 mpls_precincts_shots %>% 
   mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
   mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
-  ggplot(aes(x = log_n_shots_summer)) + geom_density()
+  ggplot(aes(x = log_n_shots_summer)) + geom_density() + theme_minimal() + 
+  labs(x = "Log count of summer gunshots", y = "Density", 
+       title = "Density plot of log summer gunshots by precinct") + 
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        axis.title = element_text(size = 13))
 
 mpls_precincts_shots %>% 
   mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
@@ -390,7 +443,6 @@ mpls_precincts_shots %>%
   mutate(log_n_shots_summer = log(n_shots_summer)) %>% 
   as.data.frame() %>% 
   summarize(mean = mean(log_n_shots_summer))
-
 
 ```
 
@@ -422,12 +474,11 @@ mpls_precincts_shots %>%
 ```
 
 
-```{r}
+```{r, message = F, warning = F}
 
 # Final regression model for the study
 mod <- lm(perc_voted_no ~ log_n_shots_summer + vap_perc_white, 
           data = mpls_precincts_shots %>% 
-            rename("Log count of summer gunshots" = )
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
             mutate(log_n_shots_summer = log(n_shots_summer)))
 
@@ -439,7 +490,7 @@ stargazer(mod, type = "html", out = "images/regression.html",
 ```
 
 
-```{r}
+```{r, message = F, warning = F}
 mod <- lm(perc_voted_no ~ log_n_shots_summer*turnout, 
           data = mpls_precincts_shots %>% 
             mutate(n_shots_summer = ifelse(n_shots_summer == 0, 1, n_shots_summer)) %>% 
@@ -456,7 +507,7 @@ stargazer(mod, type = "text")
 ```
 
 
-```{r}
+```{r, message = F, warning = F}
 
 
 
